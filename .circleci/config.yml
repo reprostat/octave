@@ -14,14 +14,12 @@ jobs:
     - checkout
     - restore_cache:
         keys:
-        - docker_build
-    
+        - docker_build    
     - run:
         name: Debug
         command: |
           echo "Git tag is: << pipeline.git.tag >>"
-          echo "CircleCI tag is: ${CIRCLE_TAG}"
-    
+          echo "CircleCI tag is: ${CIRCLE_TAG}"    
     - run:
         name: Build Docker image
         command: |
@@ -55,9 +53,7 @@ jobs:
     - checkout
     - attach_workspace:
         at: /tmp/workspace
-
     - run: docker load -i /tmp/workspace/docker/image.tar
-
     - run:
         name: Check Octave version
         command: |
@@ -65,13 +61,11 @@ jobs:
           VERSION_CHECK=$(docker run -ti reprostat/octave octave --eval "ver Octave" | grep -oP '(?<=GNU Octave Version: )[0-9\.]*')
           if [[ "xx${VERSION_REQ}xx" != "xx${VERSION_CHECK}xx" ]]; then exit 1; fi
         no_output_timeout: 5m
-
     - run:
         name: Check AWS CLI
         command: |
           docker run -ti reprostat/octave aws --version
         no_output_timeout: 5m
-
     - run:
         name: Check conda
         command: |
@@ -79,14 +73,10 @@ jobs:
         no_output_timeout: 5m
 
   deploy:
-
-    machine:
-      image: ubuntu-2204:2022.10.2
-
+    executor: ubuntu
     steps:
     - attach_workspace:
         at: /tmp/workspace
-
     - run: docker load -i /tmp/workspace/docker/image.tar
     - run:
         name: Publish
@@ -102,6 +92,7 @@ jobs:
               echo "Docker authentication not detected -> skipping"
               exit 1
           fi
+
 workflows:
   build-test-deploy:
     jobs:
@@ -114,6 +105,3 @@ workflows:
         - dockerhub
         requires:
         - test
-        filters:
-          tags:
-            only: /.*/
