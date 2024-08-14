@@ -52,6 +52,7 @@ jobs:
   test:
     executor: ubuntu
     steps:
+    - checkout
     - attach_workspace:
         at: /tmp/workspace
 
