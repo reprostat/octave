@@ -20,7 +20,7 @@ jobs:
         name: Debug
         command: |
           echo "Git tag is: << pipeline.git.tag >>"
-          echo "CircleCI tag is: ${CIRCLE_TAG} >>"
+          echo "CircleCI tag is: ${CIRCLE_TAG}"
     
     - run:
         name: Build Docker image
@@ -63,7 +63,7 @@ jobs:
         command: |
           VERSION_REQ=$(jq -r '.OCTAVE_VERSION' build-conf.json)
           VERSION_CHECK=$(docker run -ti reprostat/octave octave --eval "ver Octave" | grep -oP '(?<=GNU Octave Version: )[0-9\.]*')
-          if [[ "xx${VERSION_REQ}xx" != "xx${VERSION_CHECK}xx" ]]; then exit(1); fi
+          if [[ "xx${VERSION_REQ}xx" != "xx${VERSION_CHECK}xx" ]]; then exit 1; fi
         no_output_timeout: 5m
 
     - run:
