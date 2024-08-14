@@ -38,7 +38,7 @@ jobs:
             --build-arg="GNU_MIRROR=https://ftpmirror.gnu.org/octave" \
             -t reprostat/octave .
           mkdir -p "${HOME}/docker"
-          docker save "${user_name}/${repo_name}" > "${HOME}/docker/image.tar"
+          docker save reprostat/octave > "${HOME}/docker/image.tar"
         no_output_timeout: 1h
     - save_cache:
         key: docker_build
