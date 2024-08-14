@@ -1,0 +1,118 @@
+---
+version: 2.1
+
+executors:
+  ubuntu:
+    machine:
+      image: 'ubuntu-2204:current' # if you change version you may need to update the command installing OCTAVE dependencies
+    resource_class: medium
+
+jobs:
+  build:
+    executor: ubuntu
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+        - docker_build
+    
+    - run:
+        name: Debug
+        command: |
+          echo "Git tag is: << pipeline.git.tag >>"
+          echo "CircleCI tag is: ${CIRCLE_TAG} >>"
+    
+    - run:
+        name: Build Docker image
+        command: |
+          if [[ -e "${HOME}/docker/image.tar" ]]; then
+              docker load -i "${HOME}/docker/image.tar"
+          fi
+
+          OCTAVE_VERSION=$(jq -r '.OCTAVE_VERSION' build-conf.json)
+          OCTAVE_BUILDER_VERSION=$(jq -r ".BUILDER_VERSION.\"${OCTAVE_VERSION}\"" build-conf.json)
+          
+          docker build -f Dockerfile \
+            --build-arg="OCTAVE_VERSION_MAJOR=${OCTAVE_BUILDER_VERSION}" \
+            --build-arg="OCTAVE_VERSION=${OCTAVE_VERSION}" \
+            --build-arg="GNU_MIRROR=https://ftpmirror.gnu.org/octave" \
+            -t reprostat/octave .
+          mkdir -p "${HOME}/docker"
+          docker save "${user_name}/${repo_name}" > "${HOME}/docker/image.tar"
+        no_output_timeout: 1h
+    - save_cache:
+        key: docker_build
+        paths:
+        - ~/docker
+    - persist_to_workspace:
+        root: /home/circleci
+        paths:
+        - docker/image.tar
+
+  test:
+    executor: ubuntu
+    steps:
+    - attach_workspace:
+        at: /tmp/workspace
+
+    - run: docker load -i /tmp/workspace/docker/image.tar
+
+    - run:
+        name: Check Octave version
+        command: |
+          VERSION_REQ=$(jq -r '.OCTAVE_VERSION' build-conf.json)
+          VERSION_CHECK=$(docker run -ti reprostat/octave octave --eval "ver Octave" | grep -oP '(?<=GNU Octave Version: )[0-9\.]*')
+          if [[ "xx${VERSION_REQ}xx" != "xx${VERSION_CHECK}xx" ]]; then exit(1); fi
+        no_output_timeout: 5m
+
+    - run:
+        name: Check AWS CLI
+        command: |
+          docker run -ti reprostat/octave aws --version
+        no_output_timeout: 5m
+
+    - run:
+        name: Check conda
+        command: |
+          docker run -ti reprostat/octave /bin/bash -c ". /opt/software/config/conda_bash.sh;conda --version"
+        no_output_timeout: 5m
+
+  deploy:
+
+    machine:
+      image: ubuntu-2204:2022.10.2
+
+    steps:
+    - attach_workspace:
+        at: /tmp/workspace
+
+    - run: docker load -i /tmp/workspace/docker/image.tar
+    - run:
+        name: Publish
+        command: |
+          if [[ -n "${DOCKER_TOKEN}" ]]; then
+              echo "${DOCKER_TOKEN}" | docker login -u "${DOCKER_USER}" --password-stdin
+
+              if [[ -n "${CIRCLE_TAG}" ]]; then
+                  docker tag "${user_name}/${repo_name}" "${user_name}/${repo_name}:${CIRCLE_TAG}"
+                  docker push --all-tags "${user_name}/${repo_name}:${CIRCLE_TAG}"
+              fi
+          else
+              echo "Docker authentication not detected -> skipping"
+              exit 1
+          fi
+workflows:
+  build-test-deploy:
+    jobs:
+    - build
+    - test:
+        requires:
+        - build
+    - deploy:
+        context:
+        - dockerhub
+        requires:
+        - test
+        filters:
+          tags:
+            only: /.*/
