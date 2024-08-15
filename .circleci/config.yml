@@ -11,15 +11,15 @@ jobs:
   build:
     executor: ubuntu
     steps:
-    - checkout
-    - restore_cache:
-        keys:
-        - docker_build    
     - run:
         name: Debug
         command: |
           echo "Git tag is: << pipeline.git.tag >>"
           echo "CircleCI tag is: ${CIRCLE_TAG}"    
+    - checkout
+    - restore_cache:
+        keys:
+        - docker_build    
     - run:
         name: Build Docker image
         command: |
