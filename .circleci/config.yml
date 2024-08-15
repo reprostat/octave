@@ -102,15 +102,21 @@ workflows:
         - build
   
   build-test-deploy:
-    filters:
-      tags:
-        only: /^v.*/
     jobs:
-    - build
+    - build:
+        filters:
+          tags:
+            only: /^v.*/
     - test:
+        filters:
+          tags:
+            only: /^v.*/
         requires:
         - build
     - deploy:
+        filters:
+          tags:
+            only: /^v.*/
         context:
         - dockerhub
         requires:
