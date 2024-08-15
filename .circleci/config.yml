@@ -83,7 +83,7 @@ jobs:
         command: |
           if [[ -z "${CIRCLE_TAG}" ]]; then
               echo "Not tagged --> skipping"
-          elseif [[ -z "${DOCKER_TOKEN}" ]]; then
+          elif [[ -z "${DOCKER_TOKEN}" ]]; then
               echo "Docker authentication not detected --> failed"
               exit 1
           else              
