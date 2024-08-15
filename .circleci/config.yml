@@ -89,7 +89,7 @@ jobs:
           else              
               echo "${DOCKER_TOKEN}" | docker login -u "${DOCKER_USER}" --password-stdin
               docker tag reprostat/octave reprostat/octave:${CIRCLE_TAG}"
-              docker push --all-tags reprostat/octave:${CIRCLE_TAG}"
+              docker push --all-tags reprostat/octave
           fi
 
 workflows:
