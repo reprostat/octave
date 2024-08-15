@@ -105,24 +105,18 @@ workflows:
     jobs:
     - build:
         filters:
-          branches:
-            ignore: /.*/
           tags:
-            only: /^v.*/
+            only: /\d+\.\d+\.\d+/
     - test:
         filters:
-          branches:
-            ignore: /.*/
           tags:
-            only: /^v.*/
+            only: /\d+\.\d+\.\d+/
         requires:
         - build
     - deploy:
         filters:
-          branches:
-            ignore: /.*/
           tags:
-            only: /^v.*/
+            only: /\d+\.\d+\.\d+/
         context:
         - dockerhub
         requires:
