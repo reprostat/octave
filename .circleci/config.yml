@@ -107,16 +107,22 @@ workflows:
         filters:
           tags:
             only: /^v.*/
+          branches:
+            ignore: /.*/            
     - test:
         filters:
           tags:
             only: /^v.*/
+          branches:
+            ignore: /.*/            
         requires:
         - build
     - deploy:
         filters:
           tags:
             only: /^v.*/
+          branches:
+            ignore: /.*/            
         context:
         - dockerhub
         requires:
