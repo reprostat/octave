@@ -94,7 +94,17 @@ jobs:
           fi
 
 workflows:
+  build-test:
+    jobs:
+    - build
+    - test:
+        requires:
+        - build
+  
   build-test-deploy:
+    filters:
+      tags:
+        only: /^v.*/
     jobs:
     - build
     - test:
@@ -105,8 +115,3 @@ workflows:
         - dockerhub
         requires:
         - test
-        filters:
-          tags:
-            only: /^v.*/
-          branches:
-            ignore: /.*/
