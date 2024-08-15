@@ -81,26 +81,18 @@ jobs:
     - run:
         name: Publish
         command: |
-          if [[ -n "${DOCKER_TOKEN}" ]]; then
-              echo "${DOCKER_TOKEN}" | docker login -u "${DOCKER_USER}" --password-stdin
-
-              if [[ -n "${CIRCLE_TAG}" ]]; then
-                  docker tag "${user_name}/${repo_name}" "${user_name}/${repo_name}:${CIRCLE_TAG}"
-                  docker push --all-tags "${user_name}/${repo_name}:${CIRCLE_TAG}"
-              fi
-          else
-              echo "Docker authentication not detected -> skipping"
+          if [[ -z "${CIRCLE_TAG}" ]]; then
+              echo "Not tagged --> skipping"
+          elseif [[ -z "${DOCKER_TOKEN}" ]]; then
+              echo "Docker authentication not detected --> failed"
               exit 1
+          else              
+              echo "${DOCKER_TOKEN}" | docker login -u "${DOCKER_USER}" --password-stdin
+              docker tag "${user_name}/${repo_name}" "${user_name}/${repo_name}:${CIRCLE_TAG}"
+              docker push --all-tags "${user_name}/${repo_name}:${CIRCLE_TAG}"
           fi
 
 workflows:
-  build-test:
-    jobs:
-    - build
-    - test:
-        requires:
-        - build
-  
   build-test-deploy:
     jobs:
     - build:
@@ -117,6 +109,8 @@ workflows:
         filters:
           tags:
             only: /\d+\.\d+\.\d+/
+          branches:
+            ignore: /.*/
         context:
         - dockerhub
         requires:
