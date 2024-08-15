@@ -17,9 +17,6 @@ jobs:
           echo "Git tag is: << pipeline.git.tag >>"
           echo "CircleCI tag is: ${CIRCLE_TAG}"    
     - checkout
-    - restore_cache:
-        keys:
-        - docker_build    
     - run:
         name: Build Docker image
         command: |
@@ -38,10 +35,6 @@ jobs:
           mkdir -p "${HOME}/docker"
           docker save reprostat/octave > "${HOME}/docker/image.tar"
         no_output_timeout: 1h
-    - save_cache:
-        key: docker_build
-        paths:
-        - ~/docker
     - persist_to_workspace:
         root: /home/circleci
         paths:
