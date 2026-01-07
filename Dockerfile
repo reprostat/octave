@@ -10,8 +10,7 @@ FROM  gnuoctave/octave-build:${OCTAVE_VERSION_MAJOR}
 
 LABEL maintainer="Tibor Auer <tibor.auer@gmail.com>"
 
-ENV LAST_UPDATED=2025-01-09
-
+ENV LAST_UPDATED=2026-01-07
 
 # Update builder image with latest security updates
 RUN apt-get --yes update  && \
