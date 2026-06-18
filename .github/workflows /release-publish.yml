@@ -1,36 +1,69 @@
-name: Build and Publish Docker Image
+name: Build Octave container images
 
-# Publish upon release
 on:
-  release:
-    types: # This configuration does not affect the page_build event above
-      - created
-      - prereleased 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Octave build image version to build'
+        required: true
+        type: choice
+        options:
+          - 11.3.0
+        default: '11.3.0'
+
+env:
+  OCTAVE_LATEST: 11.3.0
 
 jobs:
-
-  docker_build:
-    name: Run docker build
+  octave:
     runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: ${{ github.event.inputs.version }}
     steps:
-
-      - name: Check out code
+      - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Build Docker container
-        shell: sh
-        run: |
-          docker build --pull --no-cache --force-rm -t ${{ secrets.DOCKERHUB_USERNAME }}/octave:${{ github.ref_name }} .
-
-      - name: Log in to DockerHub
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+      
+      - name: Login to DockerHub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Push Docker image
+      -
+        name: Determine build image version
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/octave:${{ github.ref_name }}
+          VER=${{ matrix.version }}
+          BUILD_VER=${VER%%.*}
+          GNU_MIRROR=https://ftpmirror.gnu.org/octave
+          echo "OCTAVE_VERSION_MAJOR=${BUILD_VER}" >> $GITHUB_ENV
+          echo "GNU_MIRROR=${GNU_MIRROR}" >> $GITHUB_ENV
+      -
+        name: Set "latest" tag
+        if: ${{ matrix.version == env.OCTAVE_LATEST }}
+        run: |
+          echo "DOCKER_LATEST_TAG=gnuoctave/octave:latest" >> $GITHUB_ENV
+          echo "GHCR_LATEST_TAG=ghcr.io/gnu-octave/octave:latest" >> $GITHUB_ENV
+      -
+        name: Build and push
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: .
+          file: Dockerfile
+          build-args: |
+            OCTAVE_VERSION=${{ matrix.version }}
+            OCTAVE_VERSION_MAJOR=${{ env.OCTAVE_VERSION_MAJOR }}
+            GNU_MIRROR=${{ env.GNU_MIRROR }}
+          push: true
+          tags: |
+            reprostat/octave:${{ matrix.version }}
+            ${{ env.DOCKER_LATEST_TAG }}
