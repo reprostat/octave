@@ -43,7 +43,7 @@ RUN mkdir -p /tmp/build  \
     && tar -xf octave-${OCTAVE_VERSION}.tar.gz     \
     && cd      octave-${OCTAVE_VERSION}            \
     && ./configure    ${OCTAVE_CONFIGURE_ARGS}     \
-          F77_INTEGER_8_FLAG=${F77_INTEGER_8_FLAG} \
+          F77_INTEGER_8_FLAG="-finteger-4-integer-8" \
     && make -j8      \
     && make install  \
     && rm -rf /tmp/build
