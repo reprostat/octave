@@ -20,13 +20,13 @@ jobs:
           fi
 
           OCTAVE_VERSION=$(jq -r '.OCTAVE_VERSION' build-conf.json)
-          OCTAVE_BUILDER_VERSION=$(jq -r ".BUILDER_VERSION.\"${OCTAVE_VERSION}\"" build-conf.json)
+          OCTAVE_VERSION_MAJOR=$(jq -r ".BUILDER_VERSION.\"${OCTAVE_VERSION}\"" build-conf.json)
           
-          docker build -f Dockerfile \
-            --build-arg="OCTAVE_VERSION_MAJOR=${OCTAVE_BUILDER_VERSION}" \
-            --build-arg="OCTAVE_VERSION=${OCTAVE_VERSION}" \
-            --build-arg="GNU_MIRROR=https://ftpmirror.gnu.org/octave" \
-            -t reprostat/octave .
+          docker buildx build --file Dockerfile \
+            --build-arg OCTAVE_VERSION_MAJOR=${OCTAVE_VERSION_MAJOR} \
+            --build-arg OCTAVE_VERSION=${OCTAVE_VERSION} \
+            --build-arg GNU_MIRROR=https://ftpmirror.gnu.org/octave \
+            --tag reprostat/octave .
           mkdir -p "${HOME}/docker"
           docker save reprostat/octave > "${HOME}/docker/image.tar"
         no_output_timeout: 1h
