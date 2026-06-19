@@ -4,8 +4,8 @@ version: 2.1
 executors:
   ubuntu:
     machine:
-      image: 'ubuntu-2604:current' # if you change version you may need to update the command installing OCTAVE dependencies
-    resource_class: medium
+      image: ubuntu-2604:current # if you change version you may need to update the command installing OCTAVE dependencies
+    resource_class: medium.gen2
 
 jobs:
   build:
