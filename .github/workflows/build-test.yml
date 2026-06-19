@@ -52,6 +52,7 @@ jobs:
             OCTAVE_VERSION_MAJOR=${{ env.OCTAVE_VERSION_MAJOR }}
             GNU_MIRROR=${{ env.GNU_MIRROR }}
           push: false
+          load: true
           tags: |
             reprostat/octave:${{ matrix.version }}
 
