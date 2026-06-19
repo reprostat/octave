@@ -23,12 +23,12 @@ RUN apt --yes update  && \
     	libswscale-dev \
     	graphviz \
     	tcsh \
-        libopenblas64-0 \
     	&& \
+    apt --yes remove libopenblas0 libopenblas0-pthread  && \
     apt --yes clean && \
     apt --yes autoremove && \
     rm -Rf /var/lib/apt/lists/* && \
-    pip3 install --upgrade --no-cache-dir \
+    pip3 install --upgrade --no-cache-dir --break-system-packages \
       pip \
       sympy \
       || true
