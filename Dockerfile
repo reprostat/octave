@@ -23,6 +23,7 @@ RUN apt --yes update  && \
     	libswscale-dev \
     	graphviz \
     	tcsh \
+        libopenblas64-0 \
     	&& \
     apt --yes clean && \
     apt --yes autoremove && \
