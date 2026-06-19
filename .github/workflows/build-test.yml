@@ -1,11 +1,11 @@
-name: Build and publish Octave container image
+name: Build and test Octave container image
 
 on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
       version:
-        description: 'Octave build image version to build and publish'
+        description: 'Octave build image version to build and test'
         required: true
         type: choice
         options:
@@ -34,19 +34,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
       
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Login to DockerHub
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      
       - name: Determine build image version
         run: |
           VER=${{ matrix.version }}
@@ -55,13 +42,7 @@ jobs:
           echo "OCTAVE_VERSION_MAJOR=${BUILD_VER}" >> $GITHUB_ENV
           echo "GNU_MIRROR=${GNU_MIRROR}" >> $GITHUB_ENV
       
-      - name: Set "latest" tag
-        if: ${{ matrix.version == env.OCTAVE_LATEST }}
-        run: |
-          echo "DOCKER_LATEST_TAG=reprostat/octave:latest" >> $GITHUB_ENV
-          echo "GHCR_LATEST_TAG=ghcr.io/reprostat/octave:latest" >> $GITHUB_ENV
-
-      - name: Build and push
+      - name: Build
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
@@ -70,9 +51,18 @@ jobs:
             OCTAVE_VERSION=${{ matrix.version }}
             OCTAVE_VERSION_MAJOR=${{ env.OCTAVE_VERSION_MAJOR }}
             GNU_MIRROR=${{ env.GNU_MIRROR }}
-          push: true
+          push: false
           tags: |
             reprostat/octave:${{ matrix.version }}
-            ${{ env.DOCKER_LATEST_TAG }}
-            ghcr.io/reprostat/octave:${{ matrix.version }}
-            ${{ env.GHCR_LATEST_TAG }}
+
+      - name: Check Octave version
+        run: |
+          VERSION_REQ=${{ matrix.version }}
+          VERSION_CHECK=$(docker run -ti reprostat/octave:${{ matrix.version }} octave --eval "ver Octave" | grep -oP '(?<=GNU Octave Version: )[0-9\.]*')
+          if [[ "xx${VERSION_REQ}xx" != "xx${VERSION_CHECK}xx" ]]; then exit 1; fi
+      - name: Check AWS CLI
+        run: |
+          docker run -ti reprostat/octave:${{ matrix.version }} aws --version
+      - name: Check conda
+        run: |
+          docker run -ti reprostat/octave:${{ matrix.version }} /bin/bash -c ". /opt/software/config/conda_bash.sh;conda --version"
