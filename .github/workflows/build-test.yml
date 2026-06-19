@@ -58,11 +58,11 @@ jobs:
       - name: Check Octave version
         run: |
           VERSION_REQ=${{ matrix.version }}
-          VERSION_CHECK=$(docker run -ti reprostat/octave:${{ matrix.version }} octave --eval "ver Octave" | grep -oP '(?<=GNU Octave Version: )[0-9\.]*')
+          VERSION_CHECK=$(docker run reprostat/octave:${{ matrix.version }} octave --eval "ver Octave" | grep -oP '(?<=GNU Octave Version: )[0-9\.]*')
           if [[ "xx${VERSION_REQ}xx" != "xx${VERSION_CHECK}xx" ]]; then echo "Version mismatch: required ${VERSION_REQ}, found ${VERSION_CHECK}"; fi
       - name: Check AWS CLI
         run: |
-          docker run -ti reprostat/octave:${{ matrix.version }} aws --version
+          docker run reprostat/octave:${{ matrix.version }} aws --version
       - name: Check conda
         run: |
-          docker run -ti reprostat/octave:${{ matrix.version }} /bin/bash -c ". /opt/software/config/conda_bash.sh;conda --version"
+          docker run reprostat/octave:${{ matrix.version }} /bin/bash -c ". /opt/software/config/conda_bash.sh;conda --version"
